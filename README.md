@@ -20,8 +20,8 @@ A comprehensive car rental web application built with Flask that allows users to
 
 1. Clone the repository
    ```
-   git clone https://github.com/yourusername/Travora.git
-   cd Travora
+   git clone https://github.com/yourusername/carmodel.git
+   cd carmodel
    ```
 
 2. Activate the virtual environment
@@ -87,9 +87,9 @@ To contribute to this project:
 
 ## Team Members
 
-- [Team Member 1]
-- [Team Member 2]
-- [Team Member 3]
+- Stephanie Luu
+- Nathan Taylor
+- Jireh Ayertey
 
 ## License
 
