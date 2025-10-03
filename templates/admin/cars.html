@@ -1,0 +1,90 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Car Inventory Management</h1>
+        <a href="{{ url_for('admin_new_car') }}" class="btn btn-success">
+            <i class="fas fa-plus me-2"></i> Add New Car
+        </a>
+    </div>
+    
+    {% if cars %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Image</th>
+                        <th>Make & Model</th>
+                        <th>Year</th>
+                        <th>Category</th>
+                        <th>Daily Rate</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for car in cars %}
+                        <tr>
+                            <td>{{ car.id }}</td>
+                            <td>
+                                {% if car.image_url %}
+                                    <img src="{{ car.image_url }}" alt="{{ car.make }} {{ car.model }}" style="width: 60px; height: 40px; object-fit: cover;">
+                                {% else %}
+                                    <img src="{{ url_for('static', filename='img/car-placeholder.jpg') }}" alt="Car placeholder" style="width: 60px; height: 40px; object-fit: cover;">
+                                {% endif %}
+                            </td>
+                            <td>{{ car.make }} {{ car.model }}</td>
+                            <td>{{ car.year }}</td>
+                            <td>{{ car.category|capitalize }}</td>
+                            <td>${{ car.daily_rate }}</td>
+                            <td>
+                                {% if car.is_available %}
+                                    <span class="badge bg-success">Available</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Unavailable</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('admin_edit_car', car_id=car.id) }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ car.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                
+                                <!-- Delete Modal -->
+                                <div class="modal fade" id="deleteModal{{ car.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ car.id }}" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="deleteModalLabel{{ car.id }}">Confirm Delete</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                Are you sure you want to delete {{ car.make }} {{ car.model }} ({{ car.year }}) from inventory?
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <form action="{{ url_for('admin_delete_car', car_id=car.id) }}" method="POST">
+                                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            <p>No cars in inventory. Add your first car to get started.</p>
+            <a href="{{ url_for('admin_new_car') }}" class="btn btn-primary">Add New Car</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

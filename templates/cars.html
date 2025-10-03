@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Available Cars</h1>
+    
+    <!-- Filter and Sort Section -->
+    <div class="filter-section mb-4">
+        <form method="GET" action="{{ url_for('cars') }}" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Category</label>
+                <select name="category" class="form-select">
+                    <option value="" {% if not category %}selected{% endif %}>All Categories</option>
+                    <option value="sedan" {% if category == 'sedan' %}selected{% endif %}>Sedan</option>
+                    <option value="suv" {% if category == 'suv' %}selected{% endif %}>SUV</option>
+                    <option value="economy" {% if category == 'economy' %}selected{% endif %}>Economy</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Sort By</label>
+                <select name="sort" class="form-select">
+                    <option value="" {% if not sort %}selected{% endif %}>Default</option>
+                    <option value="price_low" {% if sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                    <option value="price_high" {% if sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Cars Grid -->
+    <div class="row">
+        {% for car in cars %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    {% if car.image_url %}
+                        <img src="{{ car.image_url }}" class="card-img-top" alt="{{ car.make }} {{ car.model }}">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='img/car-placeholder.jpg') }}" class="card-img-top" alt="Car placeholder">
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ car.make }} {{ car.model }} ({{ car.year }})</h5>
+                        <p class="card-text">
+                            <span class="badge bg-secondary">{{ car.category|capitalize }}</span>
+                        </p>
+                        <p class="price-tag">${{ car.daily_rate }}/day</p>
+                        <a href="{{ url_for('car_detail', car_id=car.id) }}" class="btn btn-primary">View Details</a>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12 text-center">
+                <p>No cars available matching your criteria. Please try different filters.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

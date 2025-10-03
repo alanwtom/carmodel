@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Car Details -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                {% if car.image_url %}
+                    <img src="{{ car.image_url }}" class="car-detail-img" alt="{{ car.make }} {{ car.model }}">
+                {% else %}
+                    <img src="{{ url_for('static', filename='img/car-placeholder.jpg') }}" class="car-detail-img" alt="Car placeholder">
+                {% endif %}
+                <div class="card-body">
+                    <h2 class="card-title">{{ car.make }} {{ car.model }} ({{ car.year }})</h2>
+                    <span class="badge bg-secondary mb-3">{{ car.category|capitalize }}</span>
+                    <p class="price-tag mb-3">${{ car.daily_rate }}/day</p>
+                    
+                    {% if car.description %}
+                        <p class="card-text">{{ car.description }}</p>
+                    {% endif %}
+                    
+                    <h4 class="mt-4">Features</h4>
+                    <ul class="car-features">
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Air Conditioning</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Power Steering</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Power Windows</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Anti-Lock Braking System</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i> Driver Airbag</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Booking Form -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title">Book This Car</h3>
+                    
+                    {% if current_user.is_authenticated %}
+                        <form method="POST" action="{{ url_for('book_car', car_id=car.id) }}">
+                            {{ form.hidden_tag() }}
+                            <div class="mb-3">
+                                {{ form.start_date.label(class="form-label") }}
+                                {% if form.start_date.errors %}
+                                    {{ form.start_date(class="form-control is-invalid", type="date") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.start_date.errors %}
+                                            <span>{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.start_date(class="form-control", type="date") }}
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                {{ form.end_date.label(class="form-label") }}
+                                {% if form.end_date.errors %}
+                                    {{ form.end_date(class="form-control is-invalid", type="date") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.end_date.errors %}
+                                            <span>{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.end_date(class="form-control", type="date") }}
+                                {% endif %}
+                            </div>
+                            <div class="d-grid gap-2">
+                                {{ form.submit(class="btn btn-primary") }}
+                            </div>
+                        </form>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <p>You need to be logged in to book a car.</p>
+                            <a href="{{ url_for('login', next=request.path) }}" class="btn btn-primary">Login</a>
+                            <a href="{{ url_for('register') }}" class="btn btn-secondary">Register</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

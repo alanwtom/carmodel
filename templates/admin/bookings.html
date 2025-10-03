@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">All Bookings</h1>
+
+    {% if bookings %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User</th>
+                        <th>Car</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>Days</th>
+                        <th>Total ($)</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                        <tr>
+                            <td>#{{ booking.id }}</td>
+                            <td>{{ booking.user.name }}<br><small class="text-muted">{{ booking.user.email }}</small></td>
+                            <td>
+                                <a href="{{ url_for('car_detail', car_id=booking.car.id) }}">
+                                    {{ booking.car.make }} {{ booking.car.model }} ({{ booking.car.year }})
+                                </a>
+                            </td>
+                            <td>{{ booking.start_date.strftime('%b %d, %Y') }}</td>
+                            <td>{{ booking.end_date.strftime('%b %d, %Y') }}</td>
+                            <td>{{ (booking.end_date - booking.start_date).days }}</td>
+                            <td>${{ booking.total_cost }}</td>
+                            <td>{{ booking.created_at.strftime('%b %d, %Y') }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            <p>No bookings yet.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+
+

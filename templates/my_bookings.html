@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">My Bookings</h1>
+    
+    {% if bookings %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>Car</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Duration</th>
+                        <th>Total Cost</th>
+                        <th>Booking Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                        <tr>
+                            <td>#{{ booking.id }}</td>
+                            <td>
+                                <a href="{{ url_for('car_detail', car_id=booking.car.id) }}">
+                                    {{ booking.car.make }} {{ booking.car.model }} ({{ booking.car.year }})
+                                </a>
+                            </td>
+                            <td>{{ booking.start_date.strftime('%b %d, %Y') }}</td>
+                            <td>{{ booking.end_date.strftime('%b %d, %Y') }}</td>
+                            <td>{{ (booking.end_date - booking.start_date).days }} days</td>
+                            <td>${{ booking.total_cost }}</td>
+                            <td>{{ booking.created_at.strftime('%b %d, %Y') }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            <p>You don't have any bookings yet.</p>
+            <a href="{{ url_for('cars') }}" class="btn btn-primary">Browse Cars</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

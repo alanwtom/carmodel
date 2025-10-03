@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Admin Dashboard</h1>
+    
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-car fa-3x mb-3 text-primary"></i>
+                    <h3>Car Management</h3>
+                    <p>Add, edit, or remove cars from your inventory.</p>
+                    <a href="{{ url_for('admin_cars') }}" class="btn btn-primary">Manage Cars</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-calendar-alt fa-3x mb-3 text-primary"></i>
+                    <h3>Booking Management</h3>
+                    <p>View and manage all customer bookings.</p>
+                    <a href="{{ url_for('admin_bookings') }}" class="btn btn-primary">Manage Bookings</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-line fa-3x mb-3 text-primary"></i>
+                    <h3>Analytics</h3>
+                    <p>View booking statistics and performance metrics.</p>
+                    <button class="btn btn-secondary" disabled>Coming Soon</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
