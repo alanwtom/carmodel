@@ -1,6 +1,8 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, FloatField, IntegerField, SelectField, DateField
-from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, NumberRange
+from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, NumberRange, Optional
+from flask_wtf.file import FileField, FileAllowed, FileRequired
+from app import app
 from models import User
 from datetime import date
 
@@ -31,6 +33,7 @@ class CarForm(FlaskForm):
     daily_rate = FloatField('Daily Rate ($)', validators=[DataRequired(), NumberRange(min=0)])
     description = TextAreaField('Description')
     image_url = StringField('Image URL')
+    images = FileField('Upload Images (you can select multiple)', render_kw={"multiple": True})
     is_available = BooleanField('Available')
     submit = SubmitField('Submit')
 

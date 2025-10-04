@@ -2,10 +2,12 @@ from flask import render_template, redirect, url_for, flash, request, abort
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import app, db, login_manager
-from models import User, Car, Booking
+from models import User, Car, Booking, CarImage
 from datetime import datetime
 from forms import LoginForm, RegistrationForm, CarForm, BookingForm
 import os
+import uuid
+from werkzeug.utils import secure_filename
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -67,19 +69,34 @@ def logout():
 def cars():
     category = request.args.get('category', '')
     sort = request.args.get('sort', '')
-    
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 9, type=int)
+
     query = Car.query
-    
+
     if category:
         query = query.filter_by(category=category)
-    
+
     if sort == 'price_low':
         query = query.order_by(Car.daily_rate.asc())
     elif sort == 'price_high':
         query = query.order_by(Car.daily_rate.desc())
-    
-    cars = query.all()
-    return render_template('cars.html', cars=cars, category=category, sort=sort)
+    else:
+        query = query.order_by(Car.id.desc())
+
+    # Optimize: eager load images for primary display
+    from sqlalchemy.orm import selectinload
+    query = query.options(selectinload(Car.images))
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    cars_items = pagination.items
+
+    return render_template(
+        'cars.html',
+        cars=cars_items,
+        category=category,
+        sort=sort,
+        pagination=pagination,
+    )
 
 @app.route('/car/<int:car_id>')
 def car_detail(car_id):
@@ -189,10 +206,38 @@ def admin_new_car():
             image_url=form.image_url.data,
             is_available=True
         )
-        
+
         db.session.add(car)
+        db.session.flush()
+
+        # Handle uploaded images
+        upload_folder = app.config.get('UPLOAD_FOLDER', os.path.join('static', 'uploads'))
+        allowed_exts = app.config.get('ALLOWED_IMAGE_EXTENSIONS', set())
+        os.makedirs(upload_folder, exist_ok=True)
+
+        uploaded_files = request.files.getlist('images')
+        saved_any = False
+        for index, file_storage in enumerate(uploaded_files):
+            if not file_storage or file_storage.filename == '':
+                continue
+            filename = secure_filename(file_storage.filename)
+            ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
+            if allowed_exts and ext not in allowed_exts:
+                continue
+            unique_name = f"{uuid.uuid4().hex}_{filename}"
+            disk_path = os.path.join(upload_folder, unique_name)
+            file_storage.save(disk_path)
+            relative_path = os.path.join('static', 'uploads', unique_name)
+            is_primary = index == 0
+            db.session.add(CarImage(car_id=car.id, file_path=relative_path, is_primary=is_primary))
+            saved_any = True
+
+        # If no uploads but image_url provided, keep as legacy primary
+        if saved_any:
+            pass
+
         db.session.commit()
-        
+
         flash('Car has been added to inventory!', 'success')
         return redirect(url_for('admin_cars'))
     
@@ -216,6 +261,26 @@ def admin_edit_car(car_id):
         car.description = form.description.data
         car.image_url = form.image_url.data
         car.is_available = form.is_available.data
+
+        # Handle uploaded images (append to gallery)
+        upload_folder = app.config.get('UPLOAD_FOLDER', os.path.join('static', 'uploads'))
+        allowed_exts = app.config.get('ALLOWED_IMAGE_EXTENSIONS', set())
+        os.makedirs(upload_folder, exist_ok=True)
+        uploaded_files = request.files.getlist('images')
+        for file_storage in uploaded_files:
+            if not file_storage or file_storage.filename == '':
+                continue
+            filename = secure_filename(file_storage.filename)
+            ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
+            if allowed_exts and ext not in allowed_exts:
+                continue
+            unique_name = f"{uuid.uuid4().hex}_{filename}"
+            disk_path = os.path.join(upload_folder, unique_name)
+            file_storage.save(disk_path)
+            relative_path = os.path.join('static', 'uploads', unique_name)
+            # If car has no primary image yet, mark first added as primary
+            is_primary = not any(img.is_primary for img in car.images)
+            db.session.add(CarImage(car_id=car.id, file_path=relative_path, is_primary=is_primary))
         
         db.session.commit()
         
