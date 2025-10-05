@@ -5,12 +5,26 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import os
 from dotenv import load_dotenv
+import logging
+from logging_setup import setup_logging
 
 # Load environment variables
 load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
+
+setup_logging()  # Set up logging configuration here
+
+@app.route('/error')
+def error_route():
+    try:
+        # Intentionally causing an error to demonstrate error logging
+        result = 1 / 0  # Division by zero error
+    except Exception as e:
+        app.logger.error(f"Error occurred: {e}", exc_info=True)
+        return "An error occurred!", 500
+
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'default-secret-key')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///travora.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
