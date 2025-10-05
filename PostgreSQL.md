@@ -1,26 +1,25 @@
 
-\### \*\*Migration Plan for PostgreSQL Database\*\*
+### Migration Plan for PostgreSQL Database
 
-\#### \*\*1. Database Setup\*\*
+#### 1. Database Setup
 
-\*\*1.1. Current Database:\*\*
+1.1. Current Database: The current setup is using SQLite (\`sqlite:///travora.db\`). \* The
+  new database should be PostgreSQL
+  (\`postgresql://user:password@localhost/travora\`).
+  
+1.2. Install PostgreSQL and psycopg2: Ensure that PostgreSQL is installed on your system. 
+```
+Install
+psycopg2 the PostgreSQL adapter for Python:
+  
+bash pip install psycopg2 
 
-\* The current setup is using SQLite (\`sqlite:///travora.db\`). \* The
-new database should be PostgreSQL
-(\`postgresql://user:password@localhost/travora\`).
-
-\*\*1.2. Install PostgreSQL and psycopg2:\*\*
-
-\* Ensure that PostgreSQL is installed on your system. \* Install
-\`psycopg2\`, the PostgreSQL adapter for Python:
-
-\`\`\`bash pip install psycopg2 \`\`\`
-
-\*\*1.3. Update Environment Variables:\*\*
-
-\* Update \`.env\` file with PostgreSQL database URI:
-
-\`\`\`plaintext
+```
+1.3. Update Environment Variables:
+  
+  \* Update \`.env\` file with PostgreSQL database URI:
+  
+  \`\`\`plaintext
 DATABASE_URL=postgresql://username:password@localhost/travora
 SECRET_KEY=your-secret-key \`\`\`
 
