@@ -91,6 +91,15 @@
                                     {{ form.end_date(class="form-control", type="date") }}
                                 {% endif %}
                             </div>
+                            <div class="mb-3">
+                                {{ form.payment_method.label(class="form-label") }}
+                                {% for subfield in form.payment_method %}
+                                <div class="form-check">
+                                    {{ subfield(class='form-check-input') }}
+                                    <label class="form-check-label" for="{{ subfield.id }}">{{ subfield.label.text }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
                             <div class="d-grid gap-2">
                                 {{ form.submit(class="btn btn-primary") }}
                             </div>

@@ -122,7 +122,7 @@ def book_car(car_id):
         flash('This car is not available for booking.', 'danger')
         return redirect(url_for('cars'))
     
-    form = EditBookingForm()
+    form = BookingForm()
     if form.validate_on_submit():
         start_date = form.start_date.data
         end_date = form.end_date.data
@@ -209,7 +209,7 @@ def edit_booking(booking_id):
         abort(403)
 
     car = Car.query.get_or_404(booking.car_id)
-    form = BookingForm()
+    form = EditBookingForm()
 
     if form.validate_on_submit():
         start_date = form.start_date.data
