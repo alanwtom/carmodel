@@ -69,7 +69,7 @@ class Booking(db.Model):
     
     def __repr__(self):
         return f'<Booking {self.id} - User: {self.user_id}, Car: {self.car_id}>'
-
+ 
 
 class Wallet(db.Model):
     id = db.Column(db.Integer, primary_key=True)

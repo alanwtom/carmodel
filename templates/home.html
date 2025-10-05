@@ -1,121 +1,157 @@
-{% extends "layout.html" %}
-
-{% block content %}
+{% extends "layout.html" %} {% block content %}
 <!-- Hero Section -->
 <section class="hero">
-    <div class="container text-center">
-        <h1>Find Your Perfect Ride</h1>
-        <p class="lead">Explore our wide range of vehicles for any journey</p>
-        <a href="{{ url_for('cars') }}" class="btn btn-primary btn-lg">Browse Cars</a>
-    </div>
+  <div class="container text-center">
+    <h1>Find Your Perfect Ride</h1>
+    <p class="lead">Explore our wide range of vehicles for any journey</p>
+    <a href="{{ url_for('cars') }}" class="btn btn-primary btn-lg"
+      >Browse Cars</a
+    {% if current_user.is_authenticated %}
+    <li><a href="{{ url_for('cars') }}" class="btn btn-primary btn-lg">Book Now</a></li>
+    {% else %}
+    <li><a href="{{ url_for('login') }}"  class="btn btn-primary btn-lg">Book Now</a></li>
+    {% endif %}
+  </div>
 </section>
 
 <!-- Featured Cars Section -->
 <section class="container">
-    <h2 class="text-center mb-4">Featured Cars</h2>
-    <div class="row">
-        {% for car in cars[:6] %}
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    {% set p = (car.primary_image_path or '')|replace('\\','/') %}
-                    {% if p %}
-                        {% if p.startswith('static/') %}
-                            <img src="/{{ p }}" class="card-img-top" alt="{{ car.make }} {{ car.model }}">
-                        {% else %}
-                            <img src="{{ p }}" class="card-img-top" alt="{{ car.make }} {{ car.model }}">
-                        {% endif %}
-                    {% else %}
-                        <img src="{{ url_for('static', filename='img/car-placeholder.jpg') }}" class="card-img-top" alt="Car placeholder">
-                    {% endif %}
-                    <div class="card-body">
-                        <h5 class="card-title">{{ car.make }} {{ car.model }} ({{ car.year }})</h5>
-                        <p class="card-text">
-                            <span class="badge bg-secondary">{{ car.category|capitalize }}</span>
-                        </p>
-                        <p class="price-tag">${{ car.daily_rate }}/day</p>
-                        <a href="{{ url_for('car_detail', car_id=car.id) }}" class="btn btn-primary">View Details</a>
-                    </div>
-                </div>
-            </div>
+  <h2 class="text-center mb-4">Featured Cars</h2>
+  <div class="row">
+    {% for car in cars[:6] %}
+    <div class="col-md-4 mb-4">
+      <div class="card h-100">
+        {% if car.image_url %}
+        <img
+          src="{{ car.image_url }}"
+          class="card-img-top"
+          alt="{{ car.make }} {{ car.model }}"
+        />
         {% else %}
-            <div class="col-12 text-center">
-                <p>No cars available at the moment. Please check back later.</p>
-            </div>
-        {% endfor %}
+        <img
+          src="{{ url_for('static', filename='img/car-placeholder.jpg') }}"
+          class="card-img-top"
+          alt="Car placeholder"
+        />
+        {% endif %}
+        <div class="card-body">
+          <h5 class="card-title">
+            {{ car.make }} {{ car.model }} ({{ car.year }})
+          </h5>
+          <p class="card-text">
+            <span class="badge bg-secondary"
+              >{{ car.category|capitalize }}</span
+            >
+          </p>
+          <p class="price-tag">${{ car.daily_rate }}/day</p>
+          <a
+            href="{{ url_for('car_detail', car_id=car.id) }}"
+            class="btn btn-primary"
+            >View Details</a
+          >
+        </div>
+      </div>
     </div>
-    <div class="text-center mt-4">
-        <a href="{{ url_for('cars') }}" class="btn btn-secondary">View All Cars</a>
+    {% else %}
+    <div class="col-12 text-center">
+      <p>No cars available at the moment. Please check back later.</p>
     </div>
+    {% endfor %}
+  </div>
+  <div class="text-center mt-4">
+    <a href="{{ url_for('cars') }}" class="btn btn-secondary">View All Cars</a>
+  </div>
 </section>
 
 <!-- Features Section -->
 <section class="container mt-5">
-    <h2 class="text-center mb-4">Why Choose Car Rental 7</h2>
-    <div class="row">
-        <div class="col-md-4 text-center mb-4">
-            <div class="p-3">
-                <i class="fas fa-car fa-3x mb-3 text-primary"></i>
-                <h4>Wide Selection</h4>
-                <p>Choose from our diverse fleet of vehicles to match your needs and budget.</p>
-            </div>
-        </div>
-        <div class="col-md-4 text-center mb-4">
-            <div class="p-3">
-                <i class="fas fa-dollar-sign fa-3x mb-3 text-primary"></i>
-                <h4>Best Rates</h4>
-                <p>Competitive pricing with no hidden fees. Get the best value for your money.</p>
-            </div>
-        </div>
-        <div class="col-md-4 text-center mb-4">
-            <div class="p-3">
-                <i class="fas fa-headset fa-3x mb-3 text-primary"></i>
-                <h4>24/7 Support</h4>
-                <p>Our customer service team is always ready to assist you whenever you need help.</p>
-            </div>
-        </div>
+  <h2 class="text-center mb-4">Why Choose Car Rental 7</h2>
+  <div class="row">
+    <div class="col-md-4 text-center mb-4">
+      <div class="p-3">
+        <i class="fas fa-car fa-3x mb-3 text-primary"></i>
+        <h4>Wide Selection</h4>
+        <p>
+          Choose from our diverse fleet of vehicles to match your needs and
+          budget.
+        </p>
+      </div>
     </div>
+    <div class="col-md-4 text-center mb-4">
+      <div class="p-3">
+        <i class="fas fa-dollar-sign fa-3x mb-3 text-primary"></i>
+        <h4>Best Rates</h4>
+        <p>
+          Competitive pricing with no hidden fees. Get the best value for your
+          money.
+        </p>
+      </div>
+    </div>
+    <div class="col-md-4 text-center mb-4">
+      <div class="p-3">
+        <i class="fas fa-headset fa-3x mb-3 text-primary"></i>
+        <h4>24/7 Support</h4>
+        <p>
+          Our customer service team is always ready to assist you whenever you
+          need help.
+        </p>
+      </div>
+    </div>
+  </div>
 </section>
 
 <!-- How It Works Section -->
 <section class="container mt-5">
-    <h2 class="text-center mb-4">How It Works</h2>
-    <div class="row">
-        <div class="col-md-3 text-center mb-4">
-            <div class="p-3">
-                <div class="bg-primary rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width: 60px; height: 60px;">
-                    <span class="text-white fw-bold">1</span>
-                </div>
-                <h5>Choose a Car</h5>
-                <p>Browse our selection and find the perfect vehicle for your needs.</p>
-            </div>
+  <h2 class="text-center mb-4">How It Works</h2>
+  <div class="row">
+    <div class="col-md-3 text-center mb-4">
+      <div class="p-3">
+        <div
+          class="bg-primary rounded-circle d-inline-flex justify-content-center align-items-center mb-3"
+          style="width: 60px; height: 60px"
+        >
+          <span class="text-white fw-bold">1</span>
         </div>
-        <div class="col-md-3 text-center mb-4">
-            <div class="p-3">
-                <div class="bg-primary rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width: 60px; height: 60px;">
-                    <span class="text-white fw-bold">2</span>
-                </div>
-                <h5>Pick Your Dates</h5>
-                <p>Select your rental period using our easy date picker.</p>
-            </div>
-        </div>
-        <div class="col-md-3 text-center mb-4">
-            <div class="p-3">
-                <div class="bg-primary rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width: 60px; height: 60px;">
-                    <span class="text-white fw-bold">3</span>
-                </div>
-                <h5>Book Online</h5>
-                <p>Complete your reservation with our simple booking process.</p>
-            </div>
-        </div>
-        <div class="col-md-3 text-center mb-4">
-            <div class="p-3">
-                <div class="bg-primary rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width: 60px; height: 60px;">
-                    <span class="text-white fw-bold">4</span>
-                </div>
-                <h5>Enjoy Your Ride</h5>
-                <p>Pick up your car and start your journey with Car Rental 7.</p>
-            </div>
-        </div>
+        <h5>Choose a Car</h5>
+        <p>Browse our selection and find the perfect vehicle for your needs.</p>
+      </div>
     </div>
+    <div class="col-md-3 text-center mb-4">
+      <div class="p-3">
+        <div
+          class="bg-primary rounded-circle d-inline-flex justify-content-center align-items-center mb-3"
+          style="width: 60px; height: 60px"
+        >
+          <span class="text-white fw-bold">2</span>
+        </div>
+        <h5>Pick Your Dates</h5>
+        <p>Select your rental period using our easy date picker.</p>
+      </div>
+    </div>
+    <div class="col-md-3 text-center mb-4">
+      <div class="p-3">
+        <div
+          class="bg-primary rounded-circle d-inline-flex justify-content-center align-items-center mb-3"
+          style="width: 60px; height: 60px"
+        >
+          <span class="text-white fw-bold">3</span>
+        </div>
+        <h5>Book Online</h5>
+        <p>Complete your reservation with our simple booking process.</p>
+      </div>
+    </div>
+    <div class="col-md-3 text-center mb-4">
+      <div class="p-3">
+        <div
+          class="bg-primary rounded-circle d-inline-flex justify-content-center align-items-center mb-3"
+          style="width: 60px; height: 60px"
+        >
+          <span class="text-white fw-bold">4</span>
+        </div>
+        <h5>Enjoy Your Ride</h5>
+        <p>Pick up your car and start your journey with Car Rental 7.</p>
+      </div>
+    </div>
+  </div>
 </section>
 {% endblock %}
