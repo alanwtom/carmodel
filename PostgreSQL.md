@@ -133,5 +133,3 @@ If the migration fails or introduces issues, you can revert back to SQLite by:
 * PostgreSQL typically performs better with larger datasets, but monitor the application for any slow queries or issues that might require optimization.
 
 ---
-
-This migration plan should help you transition smoothly from SQLite to PostgreSQL while ensuring minimal disruption to your application. If you need a specific code adjustment or further details on any of the steps, let me know!
