@@ -69,3 +69,26 @@ class Booking(db.Model):
     
     def __repr__(self):
         return f'<Booking {self.id} - User: {self.user_id}, Car: {self.car_id}>'
+
+
+class Wallet(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False, index=True)
+    balance = db.Column(db.Float, nullable=False, default=0.0)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Wallet user={self.user_id} balance={self.balance}>'
+
+
+class Payment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    booking_id = db.Column(db.Integer, db.ForeignKey('booking.id'), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    amount = db.Column(db.Float, nullable=False)
+    method = db.Column(db.String(50), nullable=False)  # e.g., TEST_WALLET, TEST_CARD
+    status = db.Column(db.String(20), nullable=False, default='succeeded')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Payment {self.id} booking={self.booking_id} amount={self.amount}>'

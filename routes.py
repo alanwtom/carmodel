@@ -2,9 +2,9 @@ from flask import render_template, redirect, url_for, flash, request, abort
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import app, db, login_manager
-from models import User, Car, Booking, CarImage
+from models import User, Car, Booking, CarImage, Wallet, Payment
 from datetime import datetime
-from forms import LoginForm, RegistrationForm, CarForm, BookingForm
+from forms import LoginForm, RegistrationForm, CarForm, BookingForm, EditBookingForm
 import os
 import uuid
 from werkzeug.utils import secure_filename
@@ -35,6 +35,9 @@ def register():
             password=hashed_password
         )
         db.session.add(user)
+        db.session.flush()
+        # Create a wallet with free test credits
+        db.session.add(Wallet(user_id=user.id, balance=500.0))
         db.session.commit()
         flash('Your account has been created! You can now log in.', 'success')
         return redirect(url_for('login'))
@@ -51,6 +54,11 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         if user and check_password_hash(user.password, form.password.data):
             login_user(user)
+            # Ensure wallet exists; top up if missing
+            wallet = Wallet.query.filter_by(user_id=user.id).first()
+            if wallet is None:
+                db.session.add(Wallet(user_id=user.id, balance=500.0))
+                db.session.commit()
             next_page = request.args.get('next')
             return redirect(next_page) if next_page else redirect(url_for('home'))
         else:
@@ -113,7 +121,7 @@ def book_car(car_id):
         flash('This car is not available for booking.', 'danger')
         return redirect(url_for('cars'))
     
-    form = BookingForm()
+    form = EditBookingForm()
     if form.validate_on_submit():
         start_date = form.start_date.data
         end_date = form.end_date.data
@@ -137,8 +145,21 @@ def book_car(car_id):
         # Calculate total cost
         days = (end_date - start_date).days
         total_cost = days * car.daily_rate
-        
-        # Create booking
+
+        # Wallet/payment handling (test only)
+        method = form.payment_method.data
+        wallet = Wallet.query.filter_by(user_id=current_user.id).with_for_update().first()
+        if wallet is None:
+            wallet = Wallet(user_id=current_user.id, balance=500.0)
+            db.session.add(wallet)
+            db.session.flush()
+        if method == 'TEST_WALLET':
+            if wallet.balance < total_cost:
+                flash('Insufficient test wallet balance. Please choose a different date range or method.', 'danger')
+                return render_template('car_detail.html', car=car, form=form)
+            wallet.balance -= total_cost
+
+        # Create booking and payment record
         booking = Booking(
             user_id=current_user.id,
             car_id=car.id,
@@ -146,8 +167,15 @@ def book_car(car_id):
             end_date=end_date,
             total_cost=total_cost
         )
-        
         db.session.add(booking)
+        db.session.flush()
+        db.session.add(Payment(
+            booking_id=booking.id,
+            user_id=current_user.id,
+            amount=total_cost,
+            method=method,
+            status='succeeded'
+        ))
         db.session.commit()
         
         flash('Your booking has been confirmed!', 'success')
@@ -169,6 +197,114 @@ def booking_confirmation(booking_id):
 def my_bookings():
     bookings = Booking.query.filter_by(user_id=current_user.id).order_by(Booking.created_at.desc()).all()
     return render_template('my_bookings.html', bookings=bookings)
+
+# Edit booking
+@app.route('/booking/<int:booking_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_booking(booking_id):
+    booking = Booking.query.get_or_404(booking_id)
+    # Authorization
+    if booking.user_id != current_user.id and not current_user.is_admin:
+        abort(403)
+
+    car = Car.query.get_or_404(booking.car_id)
+    form = BookingForm()
+
+    if form.validate_on_submit():
+        start_date = form.start_date.data
+        end_date = form.end_date.data
+
+        if start_date >= end_date:
+            flash('End date must be after start date.', 'danger')
+            return render_template('booking_edit.html', booking=booking, car=car, form=form)
+
+        # Check conflicts excluding current booking
+        conflicting = Booking.query.filter(
+            Booking.car_id == booking.car_id,
+            Booking.id != booking.id,
+            Booking.end_date >= start_date,
+            Booking.start_date <= end_date
+        ).all()
+        if conflicting:
+            flash('Car is not available for the selected dates.', 'danger')
+            return render_template('booking_edit.html', booking=booking, car=car, form=form)
+
+        # Compute cost delta
+        new_days = (end_date - start_date).days
+        new_total = new_days * car.daily_rate
+        delta = new_total - booking.total_cost
+
+        method = form.payment_method.data
+        wallet = Wallet.query.filter_by(user_id=current_user.id).with_for_update().first()
+        if wallet is None:
+            wallet = Wallet(user_id=current_user.id, balance=500.0)
+            db.session.add(wallet)
+            db.session.flush()
+
+        if delta > 0:
+            if method == 'TEST_WALLET':
+                if wallet.balance < delta:
+                    flash('Insufficient test wallet balance for the change.', 'danger')
+                    return render_template('booking_edit.html', booking=booking, car=car, form=form)
+                wallet.balance -= delta
+            db.session.flush()
+            db.session.add(Payment(
+                booking_id=booking.id,
+                user_id=current_user.id,
+                amount=delta,
+                method=method,
+                status='succeeded'
+            ))
+        elif delta < 0:
+            # Refund to wallet for simplicity
+            wallet.balance += (-delta)
+            db.session.flush()
+            db.session.add(Payment(
+                booking_id=booking.id,
+                user_id=current_user.id,
+                amount=delta,  # negative indicates refund
+                method='TEST_WALLET',
+                status='succeeded'
+            ))
+
+        # Update booking
+        booking.start_date = start_date
+        booking.end_date = end_date
+        booking.total_cost = new_total
+        db.session.commit()
+
+        flash('Booking updated successfully.', 'success')
+        return redirect(url_for('my_bookings'))
+
+    # Pre-populate form
+    form.start_date.data = booking.start_date.date() if hasattr(booking.start_date, 'date') else booking.start_date
+    form.end_date.data = booking.end_date.date() if hasattr(booking.end_date, 'date') else booking.end_date
+    return render_template('booking_edit.html', booking=booking, car=car, form=form)
+
+@app.route('/booking/<int:booking_id>/cancel', methods=['POST'])
+@login_required
+def cancel_booking(booking_id):
+    booking = Booking.query.get_or_404(booking_id)
+    if booking.user_id != current_user.id and not current_user.is_admin:
+        abort(403)
+    # Simple full refund policy to test wallet
+    wallet = Wallet.query.filter_by(user_id=booking.user_id).with_for_update().first()
+    if wallet is None:
+        wallet = Wallet(user_id=booking.user_id, balance=0.0)
+        db.session.add(wallet)
+        db.session.flush()
+    wallet.balance += booking.total_cost
+    db.session.add(Payment(
+        booking_id=booking.id,
+        user_id=booking.user_id,
+        amount=-booking.total_cost,
+        method='TEST_WALLET',
+        status='succeeded'
+    ))
+    db.session.delete(booking)
+    db.session.commit()
+    flash('Booking cancelled and refunded to your test wallet.', 'success')
+    return redirect(url_for('my_bookings'))
 
 # Admin routes
 @app.route('/admin')

@@ -16,6 +16,7 @@
                         <th>Duration</th>
                         <th>Total Cost</th>
                         <th>Booking Date</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -32,6 +33,14 @@
                             <td>{{ (booking.end_date - booking.start_date).days }} days</td>
                             <td>${{ booking.total_cost }}</td>
                             <td>{{ booking.created_at.strftime('%b %d, %Y') }}</td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ url_for('edit_booking', booking_id=booking.id) }}" class="btn btn-sm btn-primary">Edit</a>
+                                    <form action="{{ url_for('cancel_booking', booking_id=booking.id) }}" method="POST" onsubmit="return confirm('Cancel this booking? This cannot be undone.');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>
+                                    </form>
+                                </div>
+                            </td>
                         </tr>
                     {% endfor %}
                 </tbody>
