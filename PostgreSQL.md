@@ -1,7 +1,3 @@
-Based on the provided code, here's the migration plan and required steps
-for a PostgreSQL migration:
-
----
 
 \### \*\*Migration Plan for PostgreSQL Database\*\*
 
