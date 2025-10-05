@@ -9,7 +9,7 @@
         <form method="GET" action="{{ url_for('cars') }}" class="row g-3">
             <div class="col-md-4">
                 <label class="form-label">Category</label>
-                <select name="category" class="form-select">
+                <select name="category" class="form-select {% if category %}is-valid{% endif %}">
                     <option value="" {% if not category %}selected{% endif %}>All Categories</option>
                     <option value="sedan" {% if category == 'sedan' %}selected{% endif %}>Sedan</option>
                     <option value="suv" {% if category == 'suv' %}selected{% endif %}>SUV</option>
@@ -18,7 +18,7 @@
             </div>
             <div class="col-md-4">
                 <label class="form-label">Sort By</label>
-                <select name="sort" class="form-select">
+                <select name="sort" class="form-select {% if sort %}is-valid{% endif %}">
                     <option value="" {% if not sort %}selected{% endif %}>Default</option>
                     <option value="price_low" {% if sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
                     <option value="price_high" {% if sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
@@ -28,25 +28,59 @@
                 <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
             </div>
         </form>
+        {% if category or sort %}
+        <div class="mt-2">
+            <span class="badge bg-primary me-2">Filters applied</span>
+            {% if category %}<span class="badge bg-light text-dark">Category: {{ category|capitalize }}</span>{% endif %}
+            {% if sort %}<span class="badge bg-light text-dark">Sorted: {{ 'Price Low-High' if sort=='price_low' else 'Price High-Low' }}</span>{% endif %}
+            <a href="{{ url_for('cars') }}" class="btn btn-sm btn-outline-secondary ms-2">Clear</a>
+        </div>
+        {% endif %}
     </div>
+    
+    {% if pagination %}
+    <nav aria-label="Car list pages" class="mt-3">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('cars', page=pagination.prev_num, category=category, sort=sort) }}" tabindex="-1">Previous</a>
+            </li>
+            {% for p in range(1, pagination.pages + 1) %}
+                <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('cars', page=p, category=category, sort=sort) }}">{{ p }}</a>
+                </li>
+            {% endfor %}
+            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('cars', page=pagination.next_num, category=category, sort=sort) }}">Next</a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
     
     <!-- Cars Grid -->
     <div class="row">
         {% for car in cars %}
             <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    {% if car.image_url %}
-                        <img src="{{ car.image_url }}" class="card-img-top" alt="{{ car.make }} {{ car.model }}">
+                <div class="card h-100 shadow-sm">
+                    {% set p = (car.primary_image_path or '')|replace('\\','/') %}
+                    {% if p %}
+                        {% if p.startswith('static/') %}
+                            <img src="/{{ p }}" class="card-img-top" alt="{{ car.make }} {{ car.model }}">
+                        {% else %}
+                            <img src="{{ p }}" class="card-img-top" alt="{{ car.make }} {{ car.model }}">
+                        {% endif %}
                     {% else %}
-                        <img src="{{ url_for('static', filename='img/car-placeholder.jpg') }}" class="card-img-top" alt="Car placeholder">
+                        <picture>
+                            <source srcset="{{ url_for('static', filename='img/car-placeholder.svg') }}" type="image/svg+xml">
+                            <img src="{{ url_for('static', filename='img/car-placeholder.jpg') }}" class="card-img-top" alt="Car placeholder">
+                        </picture>
                     {% endif %}
-                    <div class="card-body">
-                        <h5 class="card-title">{{ car.make }} {{ car.model }} ({{ car.year }})</h5>
-                        <p class="card-text">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title mb-1">{{ car.make }} {{ car.model }} ({{ car.year }})</h5>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="badge bg-secondary">{{ car.category|capitalize }}</span>
-                        </p>
-                        <p class="price-tag">${{ car.daily_rate }}/day</p>
-                        <a href="{{ url_for('car_detail', car_id=car.id) }}" class="btn btn-primary">View Details</a>
+                            <span class="price-tag fw-bold">${{ '%.2f'|format(car.daily_rate) }}/day</span>
+                        </div>
+                        <a href="{{ url_for('car_detail', car_id=car.id) }}" class="btn btn-primary mt-auto">View Details</a>
                     </div>
                 </div>
             </div>
