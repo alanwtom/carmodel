@@ -17,8 +17,13 @@
         {% for car in cars[:6] %}
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
-                    {% if car.image_url %}
-                        <img src="{{ car.image_url }}" class="card-img-top" alt="{{ car.make }} {{ car.model }}">
+                    {% set p = (car.primary_image_path or '')|replace('\\','/') %}
+                    {% if p %}
+                        {% if p.startswith('static/') %}
+                            <img src="/{{ p }}" class="card-img-top" alt="{{ car.make }} {{ car.model }}">
+                        {% else %}
+                            <img src="{{ p }}" class="card-img-top" alt="{{ car.make }} {{ car.model }}">
+                        {% endif %}
                     {% else %}
                         <img src="{{ url_for('static', filename='img/car-placeholder.jpg') }}" class="card-img-top" alt="Car placeholder">
                     {% endif %}

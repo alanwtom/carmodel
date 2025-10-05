@@ -6,13 +6,18 @@
         <!-- Car Details -->
         <div class="col-lg-8">
             <div class="card mb-4">
-                {% set gallery = car.gallery_image_paths %}
+                {% set gallery = (car.gallery_image_paths or []) %}
                 {% if gallery and gallery|length > 0 %}
                     <div id="carGallery" class="carousel slide" data-bs-ride="carousel">
                         <div class="carousel-inner">
                             {% for img_path in gallery %}
+                                {% set p = (img_path or '')|replace('\\','/') %}
                                 <div class="carousel-item {% if loop.first %}active{% endif %}">
-                                    <img src="/{{ img_path }}" class="d-block w-100 car-detail-img" alt="{{ car.make }} {{ car.model }} image {{ loop.index }}">
+                                    {% if p.startswith('static/') %}
+                                        <img src="/{{ p }}" class="d-block w-100 car-detail-img" alt="{{ car.make }} {{ car.model }} image {{ loop.index }}">
+                                    {% else %}
+                                        <img src="{{ p }}" class="d-block w-100 car-detail-img" alt="{{ car.make }} {{ car.model }} image {{ loop.index }}">
+                                    {% endif %}
                                 </div>
                             {% endfor %}
                         </div>
