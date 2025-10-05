@@ -69,7 +69,10 @@
                             <img src="{{ p }}" class="card-img-top" alt="{{ car.make }} {{ car.model }}">
                         {% endif %}
                     {% else %}
-                        <img src="{{ url_for('static', filename='img/car-placeholder.jpg') }}" class="card-img-top" alt="Car placeholder">
+                        <picture>
+                            <source srcset="{{ url_for('static', filename='img/car-placeholder.svg') }}" type="image/svg+xml">
+                            <img src="{{ url_for('static', filename='img/car-placeholder.jpg') }}" class="card-img-top" alt="Car placeholder">
+                        </picture>
                     {% endif %}
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title mb-1">{{ car.make }} {{ car.model }} ({{ car.year }})</h5>
