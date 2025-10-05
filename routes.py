@@ -153,6 +153,12 @@ def my_bookings():
     bookings = Booking.query.filter_by(user_id=current_user.id).order_by(Booking.created_at.desc()).all()
     return render_template('my_bookings.html', bookings=bookings)
 
+@app.route('/history')
+@login_required
+def history():
+    bookings = Booking.query.filter_by(user_id=current_user.id).order_by(Booking.created_at.desc()).all()
+    return render_template('history.html', bookings=bookings, now=datetime.now())
+
 # Admin routes
 @app.route('/admin')
 @login_required

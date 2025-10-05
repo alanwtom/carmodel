@@ -1,0 +1,316 @@
+{% extends "layout.html" %} {% block content %}
+<div class="container mt-4">
+  <h1 class="mb-4"><i class="fas fa-history me-2"></i>Booking History</h1>
+
+  {% if bookings %}
+  <div class="row mb-3">
+    <div class="col-12">
+      <p class="text-muted">Total bookings: {{ bookings|length }}</p>
+    </div>
+  </div>
+
+  <div id="bookings-container">
+    {% for booking in bookings[:5] %}
+    <div class="card mb-3 booking-card" data-index="{{ loop.index }}">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-3">
+            {% if booking.car.image_url %}
+            <img
+              src="{{ booking.car.image_url }}"
+              class="img-fluid rounded"
+              alt="{{ booking.car.make }} {{ booking.car.model }}"
+              style="height: 150px; width: 100%; object-fit: cover"
+            />
+            {% else %}
+            <img
+              src="{{ url_for('static', filename='img/car-placeholder.jpg') }}"
+              class="img-fluid rounded"
+              alt="Car placeholder"
+              style="height: 150px; width: 100%; object-fit: cover"
+            />
+            {% endif %}
+          </div>
+          <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <h5 class="card-title mb-0">
+                <a
+                  href="{{ url_for('car_detail', car_id=booking.car.id) }}"
+                  class="text-decoration-none"
+                >
+                  {{ booking.car.make }} {{ booking.car.model }} ({{
+                  booking.car.year }})
+                </a>
+              </h5>
+              <span class="badge bg-primary">Booking #{{ booking.id }}</span>
+            </div>
+
+            <div class="row mt-3">
+              <div class="col-md-6">
+                <p class="mb-2">
+                  <strong
+                    ><i class="fas fa-calendar-alt me-2 text-primary"></i>Rental
+                    Period:</strong
+                  ><br />
+                  <span class="ms-4"
+                    >{{ booking.start_date.strftime('%B %d, %Y') }} - {{
+                    booking.end_date.strftime('%B %d, %Y') }}</span
+                  >
+                </p>
+                <p class="mb-2">
+                  <strong
+                    ><i class="fas fa-clock me-2 text-primary"></i
+                    >Duration:</strong
+                  >
+                  <span class="ms-2"
+                    >{{ (booking.end_date - booking.start_date).days }} day{{
+                    's' if (booking.end_date - booking.start_date).days != 1
+                    else '' }}</span
+                  >
+                </p>
+              </div>
+              <div class="col-md-6">
+                <p class="mb-2">
+                  <strong
+                    ><i class="fas fa-dollar-sign me-2 text-success"></i>Total
+                    Cost:</strong
+                  >
+                  <span class="ms-2"
+                    >${{ "%.2f"|format(booking.total_cost) }}</span
+                  >
+                </p>
+                <p class="mb-2">
+                  <strong
+                    ><i class="fas fa-tag me-2 text-info"></i>Daily
+                    Rate:</strong
+                  >
+                  <span class="ms-2"
+                    >${{ "%.2f"|format(booking.car.daily_rate) }}/day</span
+                  >
+                </p>
+                <p class="mb-2">
+                  <strong
+                    ><i class="fas fa-check-circle me-2 text-success"></i>Booked
+                    On:</strong
+                  >
+                  <span class="ms-2"
+                    >{{ booking.created_at.strftime('%B %d, %Y at %I:%M %p')
+                    }}</span
+                  >
+                </p>
+              </div>
+            </div>
+
+            <div class="mt-3">
+              <span class="badge bg-secondary me-2"
+                >{{ booking.car.category|capitalize }}</span
+              >
+              {% if booking.start_date > now %}
+              <span class="badge bg-warning text-dark">Upcoming</span>
+              {% elif booking.end_date < now %}
+              <span class="badge bg-secondary">Completed</span>
+              {% else %}
+              <span class="badge bg-success">Active</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Hidden bookings for "Show More" functionality -->
+  <div id="hidden-bookings" style="display: none">
+    {% for booking in bookings[5:] %}
+    <div
+      class="card mb-3 booking-card hidden-booking"
+      data-index="{{ loop.index + 5 }}"
+    >
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-3">
+            {% if booking.car.image_url %}
+            <img
+              src="{{ booking.car.image_url }}"
+              class="img-fluid rounded"
+              alt="{{ booking.car.make }} {{ booking.car.model }}"
+              style="height: 150px; width: 100%; object-fit: cover"
+            />
+            {% else %}
+            <img
+              src="{{ url_for('static', filename='img/car-placeholder.jpg') }}"
+              class="img-fluid rounded"
+              alt="Car placeholder"
+              style="height: 150px; width: 100%; object-fit: cover"
+            />
+            {% endif %}
+          </div>
+          <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <h5 class="card-title mb-0">
+                <a
+                  href="{{ url_for('car_detail', car_id=booking.car.id) }}"
+                  class="text-decoration-none"
+                >
+                  {{ booking.car.make }} {{ booking.car.model }} ({{
+                  booking.car.year }})
+                </a>
+              </h5>
+              <span class="badge bg-primary">Booking #{{ booking.id }}</span>
+            </div>
+
+            <div class="row mt-3">
+              <div class="col-md-6">
+                <p class="mb-2">
+                  <strong
+                    ><i class="fas fa-calendar-alt me-2 text-primary"></i>Rental
+                    Period:</strong
+                  ><br />
+                  <span class="ms-4"
+                    >{{ booking.start_date.strftime('%B %d, %Y') }} - {{
+                    booking.end_date.strftime('%B %d, %Y') }}</span
+                  >
+                </p>
+                <p class="mb-2">
+                  <strong
+                    ><i class="fas fa-clock me-2 text-primary"></i
+                    >Duration:</strong
+                  >
+                  <span class="ms-2"
+                    >{{ (booking.end_date - booking.start_date).days }} day{{
+                    's' if (booking.end_date - booking.start_date).days != 1
+                    else '' }}</span
+                  >
+                </p>
+              </div>
+              <div class="col-md-6">
+                <p class="mb-2">
+                  <strong
+                    ><i class="fas fa-dollar-sign me-2 text-success"></i>Total
+                    Cost:</strong
+                  >
+                  <span class="ms-2"
+                    >${{ "%.2f"|format(booking.total_cost) }}</span
+                  >
+                </p>
+                <p class="mb-2">
+                  <strong
+                    ><i class="fas fa-tag me-2 text-info"></i>Daily
+                    Rate:</strong
+                  >
+                  <span class="ms-2"
+                    >${{ "%.2f"|format(booking.car.daily_rate) }}/day</span
+                  >
+                </p>
+                <p class="mb-2">
+                  <strong
+                    ><i class="fas fa-check-circle me-2 text-success"></i>Booked
+                    On:</strong
+                  >
+                  <span class="ms-2"
+                    >{{ booking.created_at.strftime('%B %d, %Y at %I:%M %p')
+                    }}</span
+                  >
+                </p>
+              </div>
+            </div>
+
+            <div class="mt-3">
+              <span class="badge bg-secondary me-2"
+                >{{ booking.car.category|capitalize }}</span
+              >
+              {% if booking.start_date > now %}
+              <span class="badge bg-warning text-dark">Upcoming</span>
+              {% elif booking.end_date < now %}
+              <span class="badge bg-secondary">Completed</span>
+              {% else %}
+              <span class="badge bg-success">Active</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if bookings|length > 5 %}
+  <div class="text-center mt-4 mb-4">
+    <button id="show-more-btn" class="btn btn-primary btn-lg">
+      <i class="fas fa-chevron-down me-2"></i>Show More Bookings
+    </button>
+  </div>
+  {% endif %} {% else %}
+  <div class="alert alert-info text-center">
+    <i class="fas fa-info-circle fa-3x mb-3"></i>
+    <h4>No Booking History</h4>
+    <p>
+      You haven't made any bookings yet. Start exploring our cars and book your
+      first ride!
+    </p>
+    <a href="{{ url_for('cars') }}" class="btn btn-primary mt-3">
+      <i class="fas fa-car me-2"></i>Browse Cars
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+  .booking-card {
+    transition: all 0.3s ease;
+    border-left: 4px solid var(--primary-color);
+  }
+
+  .booking-card:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .hidden-booking {
+    animation: fadeIn 0.5s ease-in;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const showMoreBtn = document.getElementById("show-more-btn");
+    const hiddenBookings = document.getElementById("hidden-bookings");
+    const bookingsContainer = document.getElementById("bookings-container");
+
+    if (showMoreBtn) {
+      showMoreBtn.addEventListener("click", function () {
+        // Get all hidden booking cards
+        const hiddenCards = hiddenBookings.querySelectorAll(".hidden-booking");
+
+        // Move them to the visible container
+        hiddenCards.forEach(function (card) {
+          bookingsContainer.appendChild(card);
+        });
+
+        // Hide the button after showing all
+        showMoreBtn.style.display = "none";
+
+        // Smooth scroll to first newly revealed booking
+        if (hiddenCards.length > 0) {
+          hiddenCards[0].scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+          });
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}
