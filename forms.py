@@ -42,3 +42,16 @@ class BookingForm(FlaskForm):
     def validate_start_date(self, start_date):
         if start_date.data < date.today():
             raise ValidationError('Start date cannot be in the past.')
+        
+class BookingModificationForm(FlaskForm):
+    start_date = DateField('Start Date', validators=[DataRequired()], format='%Y-%m-%d')
+    end_date = DateField('End Date', validators=[DataRequired()], format='%Y-%m-%d')
+    submit = SubmitField('Modify Booking')
+
+    def validate_start_date(self, start_date):
+        if start_date.data < date.today():
+            raise ValidationError('Start date cannot be in the past.')
+
+    def validate_end_date(self, end_date):
+        if end_date.data <= self.start_date.data:
+            raise ValidationError('End date must be after start date.')

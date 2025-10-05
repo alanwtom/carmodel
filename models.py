@@ -40,3 +40,12 @@ class Booking(db.Model):
     
     def __repr__(self):
         return f'<Booking {self.id} - User: {self.user_id}, Car: {self.car_id}>'
+    
+    def cancel(self):
+        self.status = 'canceled'
+        db.session.commit()
+
+    def modify(self, new_start_date, new_end_date):
+        self.start_date = new_start_date
+        self.end_date = new_end_date
+        db.session.commit()

@@ -5,6 +5,9 @@ from app import app, db, login_manager
 from models import User, Car, Booking
 from datetime import datetime
 from forms import LoginForm, RegistrationForm, CarForm, BookingForm
+from forms import BookingModificationForm
+from sqlalchemy import func
+
 import os
 
 @login_manager.user_loader
@@ -255,3 +258,154 @@ def admin_bookings():
     
     bookings = Booking.query.order_by(Booking.created_at.desc()).all()
     return render_template('admin/bookings.html', bookings=bookings)
+
+# Cancel booking route (admin only)
+@app.route('/admin/booking/<int:booking_id>/cancel', methods=['POST'])
+@login_required
+def admin_cancel_booking(booking_id):
+    if not current_user.is_admin:
+        abort(403)
+
+    booking = Booking.query.get_or_404(booking_id)
+    db.session.delete(booking)
+    db.session.commit()
+
+    flash('Booking has been canceled.', 'success')
+    return redirect(url_for('admin_bookings'))
+
+# Modify booking route (admin only)
+@app.route('/admin/booking/<int:booking_id>/modify', methods=['GET', 'POST'])
+@login_required
+def admin_modify_booking(booking_id):
+    if not current_user.is_admin:
+        abort(403)
+
+    booking = Booking.query.get_or_404(booking_id)
+    form = BookingModificationForm()
+
+    if form.validate_on_submit():
+        # Ensure car is available for the new dates
+        conflicting_bookings = Booking.query.filter(
+            Booking.car_id == booking.car_id,
+            Booking.end_date >= form.start_date.data,
+            Booking.start_date <= form.end_date.data
+        ).all()
+
+        if conflicting_bookings:
+            flash('Car is not available for the selected dates.', 'danger')
+        else:
+            booking.start_date = form.start_date.data
+            booking.end_date = form.end_date.data
+            booking.total_cost = (booking.end_date - booking.start_date).days * booking.car.daily_rate
+            db.session.commit()
+            flash('Booking has been updated.', 'success')
+            return redirect(url_for('admin_bookings'))
+
+    # Pre-fill form with current booking details
+    form.start_date.data = booking.start_date
+    form.end_date.data = booking.end_date
+
+    return render_template('admin/booking_modify.html', form=form, booking=booking)
+
+
+@app.route('/admin/analytics')
+@login_required
+def admin_analytics():
+    if not current_user.is_admin:
+        abort(403)
+
+    # Bookings per month
+    bookings_per_month = db.session.query(
+        func.strftime('%Y-%m', Booking.start_date).label('month'),
+        func.count(Booking.id).label('bookings_count')
+    ).group_by('month').all()
+
+    # Popular cars (most booked)
+    popular_cars = db.session.query(
+        Car.make, Car.model, func.count(Booking.id).label('booking_count')
+    ).join(Booking, Booking.car_id == Car.id).group_by(Car.id).order_by(func.count(Booking.id).desc()).limit(5).all()
+
+    return render_template('admin/analytics.html', bookings_per_month=bookings_per_month, popular_cars=popular_cars)
+
+# routes.py
+
+# View and manage users
+@app.route('/admin/users')
+@login_required
+def admin_users():
+    if not current_user.is_admin:
+        abort(403)
+
+    users = User.query.all()
+    return render_template('admin/users.html', users=users)
+
+# Deactivate/Activate user
+@app.route('/admin/user/<int:user_id>/toggle', methods=['POST'])
+@login_required
+def admin_toggle_user(user_id):
+    if not current_user.is_admin:
+        abort(403)
+
+    user = User.query.get_or_404(user_id)
+    user.is_active = not user.is_active
+    db.session.commit()
+
+    flash(f'User {"activated" if user.is_active else "deactivated"} successfully!', 'success')
+    return redirect(url_for('admin_users'))
+
+# Delete user
+@app.route('/admin/user/<int:user_id>/delete', methods=['POST'])
+@login_required
+def admin_delete_user(user_id):
+    if not current_user.is_admin:
+        abort(403)
+
+    user = User.query.get_or_404(user_id)
+    db.session.delete(user)
+    db.session.commit()
+
+    flash('User has been deleted.', 'success')
+    return redirect(url_for('admin_users'))
+
+# # routes.py
+# @app.route('/admin/users')
+# @login_required
+# def admin_users():
+#     if not current_user.is_admin:
+#         abort(403)
+
+#     # Fetch all users from the database
+#     users = User.query.all()
+#     return render_template('admin/users.html', users=users)
+
+@app.route('/admin/user/<int:user_id>/edit', methods=['GET', 'POST'])
+@login_required
+def admin_edit_user(user_id):
+    if not current_user.is_admin:
+        abort(403)
+
+    user = User.query.get_or_404(user_id)
+
+    # Form for editing user details (add form logic here)
+    if request.method == 'POST':
+        user.name = request.form.get('name')
+        user.email = request.form.get('email')
+        user.phone = request.form.get('phone')
+        user.is_admin = 'is_admin' in request.form  # Toggle admin status based on checkbox
+        db.session.commit()
+        flash('User information updated!', 'success')
+        return redirect(url_for('admin_users'))
+
+    return render_template('admin/user_edit.html', user=user)
+
+# @app.route('/admin/user/<int:user_id>/delete', methods=['POST'])
+# @login_required
+# def admin_delete_user(user_id):
+#     if not current_user.is_admin:
+#         abort(403)
+
+#     user = User.query.get_or_404(user_id)
+#     db.session.delete(user)
+#     db.session.commit()
+#     flash(f'User {user.name} has been deleted.', 'danger')
+#     return redirect(url_for('admin_users'))
